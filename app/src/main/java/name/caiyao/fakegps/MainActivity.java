@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     private MapView mv;
     private AMap aMap;
     private LocationManager locationManager;
-    private String mMockProviderName = LocationManager.PASSIVE_PROVIDER;
+    private String mMockProviderName = LocationManager.GPS_PROVIDER;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +101,15 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         location.setAccuracy(3.0f);
         location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
         try {
+            locationManager.addTestProvider(mMockProviderName,
+
+                    "requiresNetwork".equals(""), "requiresSatellite".equals(""), "requiresCell".equals(""), "hasMonetaryCost".equals(""),
+
+                    "supportsAltitude".equals(""), "supportsSpeed".equals(""),
+
+                    "supportsBearing".equals(""), android.location.Criteria.POWER_LOW,
+
+                    android.location.Criteria.ACCURACY_FINE);
             locationManager.setTestProviderLocation(mMockProviderName, location);
         } catch (SecurityException e) {
             e.printStackTrace();
