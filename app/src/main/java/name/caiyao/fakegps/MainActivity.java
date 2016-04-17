@@ -1,7 +1,6 @@
 package name.caiyao.fakegps;
 
 import android.content.Context;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -40,16 +39,18 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         aMap.setOnMapClickListener(this);
 
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_FINE);
-        String provider = locationManager.getBestProvider(criteria, true);
-        if (provider != null) {
-            mMockProviderName = provider;
-        }
+
 
         try {
-            locationManager.addTestProvider(mMockProviderName, false, true, false, false, true, true,
-                    true, 0, 5);
+            locationManager.addTestProvider(mMockProviderName,
+
+                    "requiresNetwork".equals(""), "requiresSatellite".equals(""), "requiresCell".equals(""), "hasMonetaryCost".equals(""),
+
+                    "supportsAltitude".equals(""), "supportsSpeed".equals(""),
+
+                    "supportsBearing".equals(""), android.location.Criteria.POWER_LOW,
+
+                    android.location.Criteria.ACCURACY_FINE);
             locationManager.setTestProviderEnabled(mMockProviderName, true);
             locationManager.requestLocationUpdates(mMockProviderName, 0, 0, this);
         } catch (Exception e) {
