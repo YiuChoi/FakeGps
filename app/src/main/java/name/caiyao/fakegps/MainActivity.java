@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
 
     @Override
     public void onBackPressed() {
-        startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
+        startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
         super.onBackPressed();
     }
 
