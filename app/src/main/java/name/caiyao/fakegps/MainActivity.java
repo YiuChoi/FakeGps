@@ -1,11 +1,11 @@
 package name.caiyao.fakegps;
 
 import android.content.Context;
+import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -20,8 +20,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
 
     private MapView mv;
     private AMap aMap;
-    private LocationManager locationManager;
-    private String mMockProviderName = LocationManager.GPS_PROVIDER;
+    private boolean hasOpen = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,11 +37,12 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         aMap.setMapType(AMap.MAP_TYPE_NORMAL);
         aMap.setOnMapClickListener(this);
 
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
 
         try {
-            locationManager.addTestProvider(mMockProviderName,
+            String mockProviderName = LocationManager.GPS_PROVIDER;
+            locationManager.addTestProvider(mockProviderName,
 
                     "requiresNetwork".equals(""), "requiresSatellite".equals(""), "requiresCell".equals(""), "hasMonetaryCost".equals(""),
 
@@ -51,10 +51,12 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                     "supportsBearing".equals(""), android.location.Criteria.POWER_LOW,
 
                     android.location.Criteria.ACCURACY_FINE);
-            locationManager.setTestProviderEnabled(mMockProviderName, true);
-            locationManager.requestLocationUpdates(mMockProviderName, 0, 0, this);
+            locationManager.setTestProviderEnabled(mockProviderName, true);
+            locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
+            hasOpen = true;
         } catch (Exception e) {
             e.printStackTrace();
+            hasOpen = false;
             Toast.makeText(this, "请打开模拟位置权限！", Toast.LENGTH_SHORT).show();
         }
     }
@@ -87,32 +89,15 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     @Override
     public void onMapClick(LatLng latLng) {
         aMap.clear();
-        Log.i("TAG", latLng.latitude + ":" + latLng.longitude);
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
         markerOptions.draggable(true);
         markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
-        aMap.addMarker(markerOptions);
-        Location location = new Location(mMockProviderName);
-        location.setTime(System.currentTimeMillis());
-        location.setLatitude(latLng.latitude);
-        location.setLongitude(latLng.longitude);
-        location.setAltitude(2.0f);
-        location.setAccuracy(3.0f);
-        location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
-        try {
-            locationManager.addTestProvider(mMockProviderName,
-
-                    "requiresNetwork".equals(""), "requiresSatellite".equals(""), "requiresCell".equals(""), "hasMonetaryCost".equals(""),
-
-                    "supportsAltitude".equals(""), "supportsSpeed".equals(""),
-
-                    "supportsBearing".equals(""), android.location.Criteria.POWER_LOW,
-
-                    android.location.Criteria.ACCURACY_FINE);
-            locationManager.setTestProviderLocation(mMockProviderName, location);
-        } catch (SecurityException e) {
-            e.printStackTrace();
+        startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
+        if (hasOpen) {
+            aMap.addMarker(markerOptions);
+            startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
+        } else {
             Toast.makeText(this, "请打开模拟位置权限！", Toast.LENGTH_SHORT).show();
         }
     }
