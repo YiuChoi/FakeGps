@@ -36,10 +36,12 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         aMap = mv.getMap();
         aMap.setMapType(AMap.MAP_TYPE_NORMAL);
         aMap.setOnMapClickListener(this);
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
-
         try {
             String mockProviderName = LocationManager.GPS_PROVIDER;
             locationManager.addTestProvider(mockProviderName,
@@ -59,11 +61,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
             hasOpen = false;
             Toast.makeText(this, "请打开模拟位置权限！", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
         mv.onResume();
     }
 

@@ -36,7 +36,6 @@ public class MockGpsService extends Service {
             }
 
             currentThread = new UpdateGPSThread();
-
             currentThread.mLocation = intent.getStringExtra("location");
             currentThread.start();
         }
