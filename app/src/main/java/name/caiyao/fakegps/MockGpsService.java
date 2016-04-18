@@ -17,8 +17,6 @@ public class MockGpsService extends Service {
     public static final String ACTION_START = "name.caiyao.fakegps.START_FAKE";
     public static final String ACTION_STOP = "name.caiyao.fakegps.STOP_FAKE";
 
-    public static MockGpsService instance = null;
-
     UpdateGPSThread currentThread = null;
 
     public MockGpsService() {
@@ -112,18 +110,5 @@ public class MockGpsService extends Service {
             Log.i("MockGPSService", "Ending UpdateGPSThread");
         }
 
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        instance = this;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (instance == this)
-            instance = null;
     }
 }
