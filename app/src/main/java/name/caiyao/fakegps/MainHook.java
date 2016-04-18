@@ -6,7 +6,6 @@ import android.provider.Settings;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -23,7 +22,6 @@ public class MainHook implements IXposedHookLoadPackage {
                         String requested = (String) param.args[1];
                         if (requested.equals(Settings.Secure.ALLOW_MOCK_LOCATION)) {
                             param.setResult("0");
-                            XposedBridge.log("Hook android.provider.Settings.Secure");
                         }
                     }
                 });
@@ -35,7 +33,6 @@ public class MainHook implements IXposedHookLoadPackage {
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                             param.setResult(false);
-                            XposedBridge.log("android.location.Location");
                         }
                     });
         }
