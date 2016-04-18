@@ -1,14 +1,17 @@
 package name.caiyao.fakegps;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
 public class MockGpsService extends Service {
@@ -30,9 +33,12 @@ public class MockGpsService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.i("TAG", "startCommand");
         if (intent.getStringExtra("action").equalsIgnoreCase(ACTION_START)) {
             if (currentThread != null) {
                 currentThread.Running = false;
+                currentThread.interrupt();
+                currentThread = null;
             }
 
             currentThread = new UpdateGPSThread();
@@ -52,12 +58,17 @@ public class MockGpsService extends Service {
     }
 
 
-    public void createProgressNotification() {
-        Notification notification = new Notification();
-        notification.flags = Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
+    public void createProgressNotification(Location location) {
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.mipmap.ic_launcher);//最为重要的一个参数，如果不设置，通知不会出现在状态栏中。
+        builder.setTicker("开始模拟位置:" + location.getLatitude() + "," + location.getLongitude());
+        builder.setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));//设置状态栏下拉后显示的图标
+        builder.setContentTitle("模拟位置:" + location.getLatitude() + "," + location.getLongitude());
+        builder.setWhen(System.currentTimeMillis());
         Intent notificationIntent = new Intent(this, MainActivity.class);
-        notification.contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        startForeground(1337, notification);
+        builder.setContentIntent( PendingIntent.getActivity(this, 0, notificationIntent, 0));
+        startForeground(1337, builder.build());
 
     }
 
@@ -73,7 +84,6 @@ public class MockGpsService extends Service {
         @Override
         public void run() {
             Log.i("MockGPSService", "Starting UpdateGPSThread");
-            createProgressNotification();
             Running = true;
             String[] loArr = mLocation.split(":");
             LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -83,6 +93,7 @@ public class MockGpsService extends Service {
             location.setLongitude(Double.parseDouble(loArr[1]));
             location.setAltitude(2.0f);
             location.setAccuracy(3.0f);
+            createProgressNotification(location);
             location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
             try {
                 locationManager.addTestProvider("gps",

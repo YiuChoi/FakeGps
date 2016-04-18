@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.amap.api.maps2d.AMap;
@@ -20,6 +22,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
 
     private MapView mv;
     private AMap aMap;
+    private LatLng latLng;
     private boolean hasOpen = false;
 
     @Override
@@ -65,6 +68,25 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.start:
+                startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
+                break;
+            case R.id.stop:
+                startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
+                break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         mv.onPause();
@@ -89,14 +111,20 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
         markerOptions.draggable(true);
+        Log.i("TAG", "经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
         markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
-        startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
         if (hasOpen) {
             aMap.addMarker(markerOptions);
-            startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
+            this.latLng = latLng;
         } else {
             Toast.makeText(this, "请打开模拟位置权限！", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
+        super.onBackPressed();
     }
 
     @Override
