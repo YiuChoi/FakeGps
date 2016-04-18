@@ -1,7 +1,5 @@
 package name.caiyao.fakegps;
 
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -35,12 +33,6 @@ public class MockGpsService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i("TAG", "startCommand");
         if (intent.getStringExtra("action").equalsIgnoreCase(ACTION_START)) {
-            if (currentThread != null) {
-                currentThread.Running = false;
-                currentThread.interrupt();
-                currentThread = null;
-            }
-
             currentThread = new UpdateGPSThread();
             currentThread.mLocation = intent.getStringExtra("location");
             currentThread.start();
@@ -59,7 +51,6 @@ public class MockGpsService extends Service {
 
 
     public void createProgressNotification(Location location) {
-        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.mipmap.ic_launcher);//最为重要的一个参数，如果不设置，通知不会出现在状态栏中。
         builder.setTicker("开始模拟位置:" + location.getLatitude() + "," + location.getLongitude());
@@ -67,7 +58,7 @@ public class MockGpsService extends Service {
         builder.setContentTitle("模拟位置:" + location.getLatitude() + "," + location.getLongitude());
         builder.setWhen(System.currentTimeMillis());
         Intent notificationIntent = new Intent(this, MainActivity.class);
-        builder.setContentIntent( PendingIntent.getActivity(this, 0, notificationIntent, 0));
+        builder.setContentIntent(PendingIntent.getActivity(this, 0, notificationIntent, 0));
         startForeground(1337, builder.build());
 
     }
@@ -97,13 +88,9 @@ public class MockGpsService extends Service {
             location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
             try {
                 locationManager.addTestProvider("gps",
-
                         "requiresNetwork".equals(""), "requiresSatellite".equals(""), "requiresCell".equals(""), "hasMonetaryCost".equals(""),
-
                         "supportsAltitude".equals(""), "supportsSpeed".equals(""),
-
                         "supportsBearing".equals(""), android.location.Criteria.POWER_LOW,
-
                         android.location.Criteria.ACCURACY_FINE);
                 locationManager.setTestProviderLocation("gps", location);
             } catch (SecurityException e) {
@@ -111,8 +98,8 @@ public class MockGpsService extends Service {
             }
 
             while (Running) {
-                locationManager.setTestProviderLocation("gps", location);
                 try {
+                    locationManager.setTestProviderLocation("gps", location);
                     Thread.sleep(500);
                 } catch (Exception ignored) {
                 }

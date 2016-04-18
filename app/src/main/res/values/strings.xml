@@ -1,4 +1,3 @@
 <resources>
-    <string name="app_name">FakeGps</string>
-    <string name="title_activity_main">MainActivity</string>
+    <string name="app_name">模拟位置</string>
 </resources>

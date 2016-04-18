@@ -23,7 +23,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     private MapView mv;
     private AMap aMap;
     private LatLng latLng;
-    private boolean hasOpen = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,10 +57,8 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                     android.location.Criteria.ACCURACY_FINE);
             locationManager.setTestProviderEnabled(mockProviderName, true);
             locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
-            hasOpen = true;
         } catch (Exception e) {
             e.printStackTrace();
-            hasOpen = false;
             Toast.makeText(this, "请打开模拟位置权限！", Toast.LENGTH_SHORT).show();
         }
         mv.onResume();
@@ -77,7 +74,29 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.start:
-                startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
+                if (latLng == null) {
+                    Toast.makeText(this, "请点击地图选择一个地点！", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+                try {
+                    String mockProviderName = LocationManager.GPS_PROVIDER;
+                    locationManager.addTestProvider(mockProviderName,
+
+                            "requiresNetwork".equals(""), "requiresSatellite".equals(""), "requiresCell".equals(""), "hasMonetaryCost".equals(""),
+
+                            "supportsAltitude".equals(""), "supportsSpeed".equals(""),
+
+                            "supportsBearing".equals(""), android.location.Criteria.POWER_LOW,
+
+                            android.location.Criteria.ACCURACY_FINE);
+                    locationManager.setTestProviderEnabled(mockProviderName, true);
+                    locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
+                    startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, "请打开模拟位置权限！", Toast.LENGTH_SHORT).show();
+                }
                 break;
             case R.id.stop:
                 startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
@@ -113,12 +132,8 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         markerOptions.draggable(true);
         Log.i("TAG", "经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
         markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
-        if (hasOpen) {
-            aMap.addMarker(markerOptions);
-            this.latLng = latLng;
-        } else {
-            Toast.makeText(this, "请打开模拟位置权限！", Toast.LENGTH_SHORT).show();
-        }
+        aMap.addMarker(markerOptions);
+        this.latLng = latLng;
     }
 
     @Override
