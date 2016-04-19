@@ -50,10 +50,11 @@ public class MockGpsService extends Service {
 
     public void createProgressNotification(Location location) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.mipmap.ic_launcher);//最为重要的一个参数，如果不设置，通知不会出现在状态栏中。
+        builder.setSmallIcon(R.drawable.gps);//最为重要的一个参数，如果不设置，通知不会出现在状态栏中。
         builder.setTicker("开始模拟位置:" + location.getLatitude() + "," + location.getLongitude());
-        builder.setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));//设置状态栏下拉后显示的图标
-        builder.setContentTitle("模拟位置:" + location.getLatitude() + "," + location.getLongitude());
+        builder.setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.gps));//设置状态栏下拉后显示的图标
+        builder.setContentTitle("模拟位置:");
+        builder.setContentText(location.getLatitude() + "," + location.getLongitude());
         builder.setWhen(System.currentTimeMillis());
         Intent notificationIntent = new Intent(this, MainActivity.class);
         builder.setContentIntent(PendingIntent.getActivity(this, 0, notificationIntent, 0));
@@ -72,7 +73,6 @@ public class MockGpsService extends Service {
 
         @Override
         public void run() {
-            Log.i("MockGPSService", "Starting UpdateGPSThread");
             Running = true;
             String[] loArr = mLocation.split(":");
             LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -107,7 +107,6 @@ public class MockGpsService extends Service {
             removeProgressNotification();
             if (currentThread == this)
                 currentThread = null;
-            Log.i("MockGPSService", "Ending UpdateGPSThread");
         }
 
     }

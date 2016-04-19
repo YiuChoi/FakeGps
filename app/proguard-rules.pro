@@ -15,3 +15,7 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+-keep public class name.caiyao.fakegps.MainHook
+-keep class com.amap.api.maps2d.**{*;}
+-dontwarn com.amap.api.**
+-keep class com.amap.api.mapcore2d.**{*;}

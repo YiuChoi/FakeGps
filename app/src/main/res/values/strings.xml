@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">模拟位置</string>
+    <string name="start">开始</string>
+    <string name="stop">停止</string>
+    <string name="donate">支付宝捐赠</string>
+    <string name="about">关于</string>
 </resources>
