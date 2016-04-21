@@ -11,10 +11,14 @@
         app:showAsAction="always"/>
 
     <item
+        android:id="@+id/search"
+        android:title="搜索"
+        app:showAsAction="never"/>
+
+    <item
         android:id="@+id/donate"
         android:title="@string/donate"
-        app:showAsAction="never"
-        />
+        app:showAsAction="never"/>
     <item
         android:id="@+id/about"
         android:title="@string/about"
