@@ -98,7 +98,7 @@ public class MockGpsService extends Service {
             while (Running) {
                 try {
                     locationManager.setTestProviderLocation("gps", location);
-                    Thread.sleep(500);
+                    Thread.sleep(100);
                 } catch (Exception ignored) {
                 }
             }
