@@ -1,87 +1,83 @@
 package name.caiyao.fakegps;
 
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.net.Uri;
+import android.content.pm.PackageInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.Toast;
-
-import com.amap.api.maps2d.AMap;
-import com.amap.api.maps2d.CameraUpdateFactory;
-import com.amap.api.maps2d.MapView;
-import com.amap.api.maps2d.model.LatLng;
-import com.amap.api.maps2d.model.MarkerOptions;
-import com.amap.api.services.core.PoiItem;
-import com.amap.api.services.poisearch.PoiResult;
-import com.amap.api.services.poisearch.PoiSearch;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements AMap.OnMapClickListener, LocationListener {
+public class MainActivity extends AppCompatActivity {
 
-    private MapView mv;
-    private AMap aMap;
-    private LatLng latLng;
-    private SharedPreferences sharedPreferences;
+    private RecyclerView mRecyclerView;
+    private ProgressBar mProgressBar;
+    private AppAdapter mAppAdapter;
+    private ArrayList<AppInfo> mAppInfos = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        sharedPreferences = getSharedPreferences("locationHistory", Context.MODE_PRIVATE);
+
+        mRecyclerView = (RecyclerView) findViewById(R.id.rv_app);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        mAppAdapter = new AppAdapter(mAppInfos);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mv = (MapView) findViewById(R.id.mv);
-        assert mv != null;
-        mv.onCreate(savedInstanceState);
-        aMap = mv.getMap();
-        double lat = Double.parseDouble(sharedPreferences.getString("lat", "0.0"));
-        double lon = Double.parseDouble(sharedPreferences.getString("lon", "0.0"));
-        if (lat != 0.0 && lon != 0.0){
-            aMap.moveCamera(CameraUpdateFactory.changeLatLng(new LatLng(lat, lon)));
-            aMap.moveCamera(CameraUpdateFactory.zoomTo(aMap.getMaxZoomLevel()));
-        }
-        aMap.setMapType(AMap.MAP_TYPE_NORMAL);
-        aMap.setOnMapClickListener(this);
+        mProgressBar = new ProgressBar(this);
+        mProgressBar.setMax(100);
+        mProgressBar.setVisibility(View.INVISIBLE);
+
+        GetAppInfoTask getAppInfoTask = new GetAppInfoTask();
+        getAppInfoTask.execute();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        try {
-            String mockProviderName = LocationManager.GPS_PROVIDER;
-            locationManager.addTestProvider(mockProviderName,
+    private class GetAppInfoTask extends AsyncTask<Integer, Integer, ArrayList<AppInfo>> {
 
-                    "requiresNetwork".equals(""), "requiresSatellite".equals(""), "requiresCell".equals(""), "hasMonetaryCost".equals(""),
-
-                    "supportsAltitude".equals(""), "supportsSpeed".equals(""),
-
-                    "supportsBearing".equals(""), android.location.Criteria.POWER_LOW,
-
-                    android.location.Criteria.ACCURACY_FINE);
-            locationManager.setTestProviderEnabled(mockProviderName, true);
-            locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "请打开模拟位置权限！", Toast.LENGTH_SHORT).show();
+        @Override
+        protected ArrayList<AppInfo> doInBackground(Integer[] params) {
+            ArrayList<AppInfo> appList = new ArrayList<>(); //用来存储获取的应用信息数据
+            List<PackageInfo> packages = getPackageManager().getInstalledPackages(0);
+            for (int i = 0; i < packages.size(); i++) {
+                PackageInfo packageInfo = packages.get(i);
+                AppInfo tmpInfo = new AppInfo();
+                tmpInfo.appName = packageInfo.applicationInfo.loadLabel(getPackageManager()).toString();
+                tmpInfo.packageName = packageInfo.packageName;
+                tmpInfo.versionName = packageInfo.versionName;
+                tmpInfo.versionCode = packageInfo.versionCode;
+                tmpInfo.appIcon = packageInfo.applicationInfo.loadIcon(getPackageManager());
+                appList.add(tmpInfo);
+                publishProgress(i / packages.size() * 100);
+            }
+            return appList;
         }
-        mv.onResume();
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            if (!mProgressBar.isShown()) {
+                mProgressBar.setVisibility(View.VISIBLE);
+            }
+            mProgressBar.setProgress(values[0]);
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<AppInfo> o) {
+            mProgressBar.setVisibility(View.INVISIBLE);
+            mAppInfos.addAll(o);
+            mAppAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override
@@ -90,162 +86,43 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         return super.onCreateOptionsMenu(menu);
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.start:
-                if (latLng == null) {
-                    Toast.makeText(this, "请点击地图选择一个地点！", Toast.LENGTH_SHORT).show();
-                    return true;
-                }
-                sharedPreferences.edit().putString("lat", String.valueOf(latLng.latitude)).putString("lon", String.valueOf(latLng.longitude)).apply();
-                LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-                try {
-                    String mockProviderName = LocationManager.GPS_PROVIDER;
-                    locationManager.addTestProvider(mockProviderName,
+    class AppAdapter extends RecyclerView.Adapter<AppAdapter.AppViewHolder> {
 
-                            "requiresNetwork".equals(""), "requiresSatellite".equals(""), "requiresCell".equals(""), "hasMonetaryCost".equals(""),
+        public ArrayList<AppInfo> mAppInfos;
 
-                            "supportsAltitude".equals(""), "supportsSpeed".equals(""),
-
-                            "supportsBearing".equals(""), android.location.Criteria.POWER_LOW,
-
-                            android.location.Criteria.ACCURACY_FINE);
-                    locationManager.setTestProviderEnabled(mockProviderName, true);
-                    locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
-                    startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Toast.makeText(this, "请打开模拟位置权限！", Toast.LENGTH_SHORT).show();
-                }
-                break;
-            case R.id.stop:
-                startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
-                break;
-            case R.id.search:
-                View view = LayoutInflater.from(this).inflate(R.layout.dialog_search, null, false);
-                final EditText et_key = (EditText) view.findViewById(R.id.key);
-                new AlertDialog.Builder(this).setView(view)
-                        .setTitle("搜索位置")
-                        .setPositiveButton("搜索", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                search(et_key.getText().toString());
-                            }
-                        }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                }).show();
-                break;
-            case R.id.donate:
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://qr.alipay.com/apoy1zw1o2xpc7915d")));
-                break;
-            case R.id.about:
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://caiyao.name/releases")));
-                break;
-
+        public AppAdapter(ArrayList<AppInfo> appInfos) {
+            this.mAppInfos = appInfos;
         }
-        return super.onOptionsItemSelected(item);
-    }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mv.onPause();
-    }
+        @Override
+        public AppViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            return new AppViewHolder(getLayoutInflater().inflate(R.layout.app_item, parent, false));
+        }
 
-    private void search(final String key) {
-        PoiSearch.Query query = new PoiSearch.Query(key, null, null);
-        query.setPageSize(10);
-        query.setPageNum(0);
-        PoiSearch poiSearch = new PoiSearch(this, query);
-        poiSearch.setOnPoiSearchListener(new PoiSearch.OnPoiSearchListener() {
-            @Override
-            public void onPoiSearched(PoiResult poiResult, int i) {
-                if (i == 1000) {
-                    final ArrayList<PoiItem> poiItems = poiResult.getPois();
-                    if (poiItems.size() != 0) {
-                        String[] keyList = new String[poiItems.size()];
-                        for (int j = 0; j < poiItems.size(); j++) {
-                            keyList[j] = poiItems.get(j).getTitle();
-                        }
-                        new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("选择位置")
-                                .setSingleChoiceItems(keyList, 0, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        aMap.moveCamera(CameraUpdateFactory.changeLatLng(new LatLng(poiItems.get(which).getLatLonPoint().getLatitude(), poiItems.get(which).getLatLonPoint().getLongitude())));
-                                        aMap.moveCamera(CameraUpdateFactory.zoomTo(aMap.getMaxZoomLevel()));
-                                        dialog.dismiss();
-                                    }
-                                }).show();
-                    } else {
-                        Toast.makeText(MainActivity.this, "没有搜索结果", Toast.LENGTH_SHORT).show();
-                    }
+        @Override
+        public void onBindViewHolder(AppViewHolder holder, int position) {
+            holder.ivIcon.setImageDrawable(mAppInfos.get(position).getAppIcon());
+            holder.tvName.setText(mAppInfos.get(position).getAppName());
+            holder.tvPackageName.setText(mAppInfos.get(position).getPackageName());
+        }
 
-                }
+        @Override
+        public int getItemCount() {
+            return mAppInfos.size();
+        }
+
+        public class AppViewHolder extends RecyclerView.ViewHolder {
+
+            public ImageView ivIcon;
+            public TextView tvName;
+            public TextView tvPackageName;
+
+            public AppViewHolder(View itemView) {
+                super(itemView);
+                ivIcon = (ImageView) itemView.findViewById(R.id.iv_icon);
+                tvName = (TextView) itemView.findViewById(R.id.tv_name);
+                tvPackageName = (TextView) itemView.findViewById(R.id.tv_package_name);
             }
-
-            @Override
-            public void onPoiItemSearched(PoiItem poiItem, int i) {
-
-            }
-        });
-        poiSearch.searchPOIAsyn();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        mv.onSaveInstanceState(outState);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mv.onDestroy();
-    }
-
-
-    @Override
-    public void onMapClick(LatLng latLng) {
-        aMap.clear();
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(latLng);
-        markerOptions.draggable(true);
-        Log.i("TAG", "经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
-        markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
-        aMap.addMarker(markerOptions);
-        this.latLng = latLng;
-    }
-
-    @Override
-    public void onBackPressed() {
-        startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
-        super.onBackPressed();
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        double lat = location.getLatitude();
-        double lng = location.getLongitude();
-        Log.i("gps", String.format("location: x=%s y=%s", lat, lng));
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
+        }
     }
 }

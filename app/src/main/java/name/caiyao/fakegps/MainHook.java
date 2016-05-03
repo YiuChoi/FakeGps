@@ -298,29 +298,14 @@ public class MainHook implements IXposedHookLoadPackage {
         XposedHelpers.callMethod(cellInfoWcdma, "setCellIdentity", XposedHelpers.newInstance(CellIdentityWcdma.class, new Object[]{Integer.valueOf(mcc), Integer.valueOf(mnc), Integer.valueOf(lac), Integer.valueOf(cid), Integer.valueOf(300)}));
         CellInfoLte cellInfoLte = (CellInfoLte) XposedHelpers.newInstance(CellInfoLte.class);
         XposedHelpers.callMethod(cellInfoLte, "setCellIdentity", XposedHelpers.newInstance(CellIdentityLte.class, new Object[]{Integer.valueOf(mcc), Integer.valueOf(mnc), Integer.valueOf(cid), Integer.valueOf(300), Integer.valueOf(lac)}));
-        switch (networkType) {
-            case 1:
-            case 2:
-                arrayList.add(cellInfoGsm);
-                break;
-            case 13:
-                arrayList.add(cellInfoLte);
-                break;
-            case 4:
-            case 5:
-            case 6:
-            case 7:
-            case 12:
-            case 14:
-                arrayList.add(cellInfoCdma);
-                break;
-            case 3:
-            case 8:
-            case 9:
-            case 10:
-            case 15:
-                arrayList.add(cellInfoWcdma);
-                break;
+        if (networkType == 1 || networkType == 2) {
+            arrayList.add(cellInfoGsm);
+        } else if (networkType == 13) {
+            arrayList.add(cellInfoLte);
+        } else if (networkType == 4 || networkType == 5 || networkType == 6 || networkType == 7 || networkType == 12 || networkType == 14) {
+            arrayList.add(cellInfoCdma);
+        } else if (networkType == 3 || networkType == 8 || networkType == 9 || networkType == 10 || networkType == 15) {
+            arrayList.add(cellInfoWcdma);
         }
         return arrayList;
     }
