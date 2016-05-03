@@ -10,6 +10,7 @@ public class AppInfo {
     public String packageName = "";
     public String versionName = "";
     public int versionCode = 0;
+    public boolean isChecked = false;
     public Drawable appIcon = null;
 
     public String getAppName() {
@@ -50,5 +51,13 @@ public class AppInfo {
 
     public void setAppIcon(Drawable appIcon) {
         this.appIcon = appIcon;
+    }
+
+    public boolean isChecked() {
+        return isChecked;
+    }
+
+    public void setChecked(boolean checked) {
+        isChecked = checked;
     }
 }
