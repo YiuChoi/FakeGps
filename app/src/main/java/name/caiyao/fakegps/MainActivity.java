@@ -68,17 +68,20 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (TextUtils.isEmpty(s)) {
+                String key = s.toString();
+                if (TextUtils.isEmpty(key)) {
                     mAppInfos.clear();
                     mAppInfos.addAll(mAllAppInfos);
                     mAppAdapter.notifyDataSetChanged();
                     return;
                 }
-                for (int i = 0; i < mAppInfos.size(); i++) {
-                    AppInfo appInfo = mAppInfos.get(i);
-                    if (!appInfo.getAppName().contains(s) && !appInfo.getPackageName().contains(s)) {
-                        mAppInfos.remove(appInfo);
-                        mAppAdapter.notifyItemRemoved(i);
+                mAppInfos.clear();
+                mAppAdapter.notifyDataSetChanged();
+                for (int i = 0; i < mAllAppInfos.size(); i++) {
+                    AppInfo appInfo = mAllAppInfos.get(i);
+                    if (appInfo.getAppName().contains(key)||appInfo.getPackageName().contains(key)) {
+                        mAppInfos.add(appInfo);
+                        mAppAdapter.notifyItemInserted(mAllAppInfos.size()-1);
                     }
                 }
             }
