@@ -1,5 +1,6 @@
-package name.caiyao.fakegps;
+package name.caiyao.fakegps.ui;
 
+import android.app.ProgressDialog;
 import android.content.pm.PackageInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -19,16 +20,19 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import name.caiyao.fakegps.data.AppInfo;
+import name.caiyao.fakegps.BuildConfig;
+import name.caiyao.fakegps.R;
+
 public class MainActivity extends AppCompatActivity {
 
-    private ProgressBar mProgressBar;
+    private ProgressDialog mProgressDialog;
     private AppAdapter mAppAdapter;
     private ArrayList<AppInfo> mAppInfos = new ArrayList<>();
     private ArrayList<AppInfo> mAllAppInfos = new ArrayList<>();
@@ -49,9 +53,10 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mProgressBar = new ProgressBar(this);
-        mProgressBar.setMax(100);
-        mProgressBar.setVisibility(View.INVISIBLE);
+        mProgressDialog = new ProgressDialog(this);
+        mProgressDialog.setMax(100);
+        mProgressDialog.setMessage("正在扫描应用程序");
+        mProgressDialog.show();
 
         EditText etSearch = (EditText) findViewById(R.id.et_search);
         assert etSearch != null;
@@ -127,16 +132,13 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onProgressUpdate(Integer... values) {
-            if (!mProgressBar.isShown()) {
-                mProgressBar.setVisibility(View.VISIBLE);
-            }
-            mProgressBar.setProgress(values[0]);
+            mProgressDialog.setProgress(values[0]);
         }
 
         @Override
         protected void onPostExecute(ArrayList<AppInfo> o) {
             mAllAppInfos = o;
-            mProgressBar.setVisibility(View.INVISIBLE);
+            mProgressDialog.dismiss();
             mAppInfos.addAll(o);
             mAppAdapter.notifyDataSetChanged();
         }

@@ -6,13 +6,15 @@
               android:layout_height="wrap_content"
               android:orientation="vertical"
               app:layout_behavior="@string/appbar_scrolling_view_behavior"
-              tools:context="name.caiyao.fakegps.MainActivity"
+              tools:context=".ui.MainActivity"
               tools:showIn="@layout/activity_main">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         android:orientation="horizontal"
         android:padding="5dp">
 

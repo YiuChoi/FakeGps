@@ -1,4 +1,4 @@
-package name.caiyao.fakegps;
+package name.caiyao.fakegps.ui;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -31,6 +31,8 @@ import com.amap.api.services.poisearch.PoiResult;
 import com.amap.api.services.poisearch.PoiSearch;
 
 import java.util.ArrayList;
+
+import name.caiyao.fakegps.R;
 
 public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickListener, LocationListener {
 
@@ -114,14 +116,12 @@ public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickLi
                             android.location.Criteria.ACCURACY_FINE);
                     locationManager.setTestProviderEnabled(mockProviderName, true);
                     locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
-                    startService(new Intent(AMapActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
                 } catch (Exception e) {
                     e.printStackTrace();
                     showDialog();
                 }
                 break;
             case R.id.stop:
-                startService(new Intent(AMapActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
                 break;
             case R.id.search:
                 View view = LayoutInflater.from(this).inflate(R.layout.dialog_search, null, false);
@@ -235,12 +235,6 @@ public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickLi
         markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
         aMap.addMarker(markerOptions);
         this.latLng = latLng;
-    }
-
-    @Override
-    public void onBackPressed() {
-        startService(new Intent(AMapActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
-        super.onBackPressed();
     }
 
     @Override

@@ -1,4 +1,4 @@
-package name.caiyao.fakegps;
+package name.caiyao.fakegps.data;
 
 import android.graphics.drawable.Drawable;
 
