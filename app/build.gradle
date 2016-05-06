@@ -8,8 +8,8 @@ android {
         applicationId "name.caiyao.fakegps"
         minSdkVersion 14
         targetSdkVersion 22
-        versionCode 3
-        versionName "1.2.0 beta"
+        versionCode 7
+        versionName "2.0.0 beta"
     }
     buildTypes {
         release {

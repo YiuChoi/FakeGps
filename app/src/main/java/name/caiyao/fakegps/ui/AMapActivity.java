@@ -5,9 +5,11 @@ import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,6 +26,7 @@ import com.amap.api.services.core.PoiItem;
 import com.amap.api.services.poisearch.PoiResult;
 import com.amap.api.services.poisearch.PoiSearch;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import name.caiyao.fakegps.R;
@@ -35,6 +38,7 @@ public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickLi
     private AMap aMap;
     private LatLng latLng;
     private String pacakgeName;
+    private int lac = 0, cid = 0;
     private SQLiteDatabase mSQLiteDatabase;
 
     @Override
@@ -59,7 +63,7 @@ public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickLi
             MarkerOptions markerOptions = new MarkerOptions();
             markerOptions.position(latLng1);
             markerOptions.draggable(true);
-            markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
+            markerOptions.title("经度：" + latLng1.longitude + ",纬度：" + latLng1.latitude);
             aMap.addMarker(markerOptions);
             aMap.moveCamera(CameraUpdateFactory.changeLatLng(latLng1));
             aMap.moveCamera(CameraUpdateFactory.zoomTo(aMap.getMaxZoomLevel()));
@@ -89,10 +93,20 @@ public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickLi
                     Toast.makeText(this, "请点击地图选择一个地点！", Toast.LENGTH_SHORT).show();
                     return true;
                 }
+                new AlertDialog.Builder(AMapActivity.this).setTitle("注意").setMessage("部分应用的定位如qq附近的人，钉钉签到等使用的是基站定位，如需使用相关功能请同时填写基站信息")
+                        .setPositiveButton("知道了", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        })
+                        .show();
                 ContentValues contentValues = new ContentValues();
                 contentValues.put("package_name", pacakgeName);
                 contentValues.put("latitude", latLng.latitude);
                 contentValues.put("longitude", latLng.longitude);
+                contentValues.put("lac", lac);
+                contentValues.put("cid", cid);
                 mSQLiteDatabase.insertWithOnConflict(DbHelper.APP_TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
                 break;
             case R.id.search:
@@ -112,8 +126,59 @@ public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickLi
                     }
                 }).show();
                 break;
+            case R.id.lac:
+                View view1 = getLayoutInflater().inflate(R.layout.dialog_lac_cid, null, false);
+                final TextInputEditText etLac = (TextInputEditText) view1.findViewById(R.id.lac);
+                final TextInputEditText etCid = (TextInputEditText) view1.findViewById(R.id.cid);
+                new AlertDialog.Builder(AMapActivity.this).setTitle("填写基站信息").setView(view1).setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        canCloseDialog(dialog, false);
+                        if (TextUtils.isEmpty(etLac.getText())) {
+                            etLac.setError("lac的值不应该为空");
+                        }
+                        if (TextUtils.isEmpty(etCid.getText())) {
+                            etCid.setError("cid的值不应该为空");
+                        }
+                        if (!TextUtils.isEmpty(etLac.getText()) && !TextUtils.isEmpty(etCid.getText())) {
+                            int lac1 = Integer.parseInt(etLac.getText().toString());
+                            int cid1 = Integer.parseInt(etCid.getText().toString());
+                            if (lac1 <= 0 || lac1 >= 65535) {
+                                etLac.setError("lac的值应该是0~65535");
+                                lac1 = 0;
+                            }
+                            if (cid1 <= 0 || cid1 >= 65535) {
+                                etCid.setError("cid的值应该是0~65535");
+                                cid1 = 0;
+                            }
+                            lac = lac1;
+                            cid = cid1;
+                        }
+                        ContentValues contentValues = new ContentValues();
+                        contentValues.put("package_name", pacakgeName);
+                        contentValues.put("lac", lac);
+                        contentValues.put("cid", cid);
+                        mSQLiteDatabase.insertWithOnConflict(DbHelper.APP_TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
+                    }
+                }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                }).show();
+                break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void canCloseDialog(DialogInterface dialogInterface, boolean close) {
+        try {
+            Field field = dialogInterface.getClass().getSuperclass().getDeclaredField("mShowing");
+            field.setAccessible(true);
+            field.set(dialogInterface, close);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

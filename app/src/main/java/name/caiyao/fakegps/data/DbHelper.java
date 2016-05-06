@@ -19,7 +19,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String CREATE_APP_TABLE = "CREATE TABLE IF NOT EXISTS " + APP_TABLE_NAME + "(package_name TEXT PRIMARY KEY," + "latitude DOUBLE,longitude DOUBLE)";
+        String CREATE_APP_TABLE = "CREATE TABLE IF NOT EXISTS " + APP_TABLE_NAME + "(package_name TEXT PRIMARY KEY," + "latitude DOUBLE,longitude DOUBLE,lac Integer,cid Integer)";
         db.execSQL(CREATE_APP_TABLE);
     }
 
