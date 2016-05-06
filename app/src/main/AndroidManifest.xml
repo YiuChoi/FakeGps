@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
           package="name.caiyao.fakegps">
 
-    <uses-permission
-        android:name="android.permission.ACCESS_MOCK_LOCATION"
-        tools:ignore="MockLocation"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -52,6 +48,7 @@
 
         <provider
             android:authorities="name.caiyao.fakegps.data.AppInfoProvider"
+            android:exported="true"
             android:name=".data.AppInfoProvider"/>
     </application>
 

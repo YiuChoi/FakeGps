@@ -13,7 +13,7 @@ import android.support.annotation.Nullable;
  * Created by 蔡小木 on 2016/5/4 0004.
  */
 public class AppInfoProvider extends ContentProvider {
-    public static final String AUTHRITY = "name.caiyao.fakegps.AppInfoProvider";
+    public static final String AUTHRITY = "name.caiyao.fakegps.data.AppInfoProvider";
     public static final Uri APP_CONTENT_URI = Uri.parse("content://" + AUTHRITY + "/app");
     public static final int APP_URI_CODE = 0;
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);

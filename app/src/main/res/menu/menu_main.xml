@@ -2,17 +2,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/start"
-        android:title="@string/start"
-        app:showAsAction="always"/>
-    <item
-        android:id="@+id/stop"
-        android:title="@string/stop"
-        app:showAsAction="always"/>
-
-    <item
-        android:id="@+id/search"
-        android:title="搜索"
+        android:id="@+id/setting"
+        android:title="设置"
         app:showAsAction="never"/>
 
     <item

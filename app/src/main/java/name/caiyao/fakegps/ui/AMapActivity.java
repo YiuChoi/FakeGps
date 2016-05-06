@@ -1,19 +1,13 @@
 package name.caiyao.fakegps.ui;
 
-import android.content.Context;
+import android.content.ContentValues;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.net.Uri;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,31 +27,43 @@ import com.amap.api.services.poisearch.PoiSearch;
 import java.util.ArrayList;
 
 import name.caiyao.fakegps.R;
+import name.caiyao.fakegps.data.DbHelper;
 
-public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickListener, LocationListener {
+public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickListener {
 
     private MapView mv;
     private AMap aMap;
     private LatLng latLng;
-    private SharedPreferences sharedPreferences;
+    private String pacakgeName;
+    private SQLiteDatabase mSQLiteDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        sharedPreferences = getSharedPreferences("locationHistory", Context.MODE_PRIVATE);
+        setContentView(R.layout.activity_amap);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        pacakgeName = getIntent().getStringExtra("package_name");
 
         mv = (MapView) findViewById(R.id.mv);
         assert mv != null;
         mv.onCreate(savedInstanceState);
         aMap = mv.getMap();
-        double lat = Double.parseDouble(sharedPreferences.getString("lat", "0.0"));
-        double lon = Double.parseDouble(sharedPreferences.getString("lon", "0.0"));
-        if (lat != 0.0 && lon != 0.0) {
-            aMap.moveCamera(CameraUpdateFactory.changeLatLng(new LatLng(lat, lon)));
+        mSQLiteDatabase = new DbHelper(this).getWritableDatabase();
+        Cursor cursor = mSQLiteDatabase.query(DbHelper.APP_TABLE_NAME, new String[]{"latitude,longitude"}, "package_name=?", new String[]{pacakgeName}, null, null, null);
+        if (cursor != null && cursor.moveToNext()) {
+            double lat = cursor.getDouble(cursor.getColumnIndex("latitude"));
+            double lon = cursor.getDouble(cursor.getColumnIndex("longitude"));
+            LatLng latLng1 = new LatLng(lat, lon);
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(latLng1);
+            markerOptions.draggable(true);
+            markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
+            aMap.addMarker(markerOptions);
+            aMap.moveCamera(CameraUpdateFactory.changeLatLng(latLng1));
             aMap.moveCamera(CameraUpdateFactory.zoomTo(aMap.getMaxZoomLevel()));
+            cursor.close();
         }
         aMap.setMapType(AMap.MAP_TYPE_NORMAL);
         aMap.setOnMapClickListener(this);
@@ -66,62 +72,28 @@ public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickLi
     @Override
     protected void onResume() {
         super.onResume();
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        try {
-            String mockProviderName = LocationManager.GPS_PROVIDER;
-            locationManager.addTestProvider(mockProviderName,
-
-                    "requiresNetwork".equals(""), "requiresSatellite".equals(""), "requiresCell".equals(""), "hasMonetaryCost".equals(""),
-
-                    "supportsAltitude".equals(""), "supportsSpeed".equals(""),
-
-                    "supportsBearing".equals(""), android.location.Criteria.POWER_LOW,
-
-                    android.location.Criteria.ACCURACY_FINE);
-            locationManager.setTestProviderEnabled(mockProviderName, true);
-            locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
-        } catch (Exception e) {
-            e.printStackTrace();
-            showDialog();
-        }
         mv.onResume();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(R.menu.menu_map, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.start:
+            case R.id.ok:
                 if (latLng == null) {
                     Toast.makeText(this, "请点击地图选择一个地点！", Toast.LENGTH_SHORT).show();
                     return true;
                 }
-                sharedPreferences.edit().putString("lat", String.valueOf(latLng.latitude)).putString("lon", String.valueOf(latLng.longitude)).apply();
-                LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-                try {
-                    String mockProviderName = LocationManager.GPS_PROVIDER;
-                    locationManager.addTestProvider(mockProviderName,
-
-                            "requiresNetwork".equals(""), "requiresSatellite".equals(""), "requiresCell".equals(""), "hasMonetaryCost".equals(""),
-
-                            "supportsAltitude".equals(""), "supportsSpeed".equals(""),
-
-                            "supportsBearing".equals(""), android.location.Criteria.POWER_LOW,
-
-                            android.location.Criteria.ACCURACY_FINE);
-                    locationManager.setTestProviderEnabled(mockProviderName, true);
-                    locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    showDialog();
-                }
-                break;
-            case R.id.stop:
+                ContentValues contentValues = new ContentValues();
+                contentValues.put("package_name", pacakgeName);
+                contentValues.put("latitude", latLng.latitude);
+                contentValues.put("longitude", latLng.longitude);
+                mSQLiteDatabase.insertWithOnConflict(DbHelper.APP_TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
                 break;
             case R.id.search:
                 View view = LayoutInflater.from(this).inflate(R.layout.dialog_search, null, false);
@@ -140,13 +112,6 @@ public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickLi
                     }
                 }).show();
                 break;
-            case R.id.donate:
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://qr.alipay.com/apoy1zw1o2xpc7915d")));
-                break;
-            case R.id.about:
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://caiyao.name/releases")));
-                break;
-
         }
         return super.onOptionsItemSelected(item);
     }
@@ -197,21 +162,6 @@ public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickLi
         poiSearch.searchPOIAsyn();
     }
 
-    private void showDialog() {
-        new AlertDialog.Builder(this).setTitle("需要打开模拟位置").setMessage("是否跳转到开发者选项打开模拟位置").setPositiveButton("确认", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
-                startActivity(intent);
-            }
-        }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        }).show();
-    }
-
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -222,8 +172,8 @@ public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickLi
     protected void onDestroy() {
         super.onDestroy();
         mv.onDestroy();
+        mSQLiteDatabase.close();
     }
-
 
     @Override
     public void onMapClick(LatLng latLng) {
@@ -231,31 +181,8 @@ public class AMapActivity extends AppCompatActivity implements AMap.OnMapClickLi
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
         markerOptions.draggable(true);
-        Log.i("TAG", "经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
         markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
         aMap.addMarker(markerOptions);
         this.latLng = latLng;
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        double lat = location.getLatitude();
-        double lng = location.getLongitude();
-        Log.i("gps", String.format("location: x=%s y=%s", lat, lng));
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
     }
 }

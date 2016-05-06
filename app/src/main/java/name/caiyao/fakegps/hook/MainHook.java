@@ -20,20 +20,19 @@ public class MainHook implements IXposedHookLoadPackage {
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
         final Object activityThread = XposedHelpers.callStaticMethod(XposedHelpers.findClass("android.app.ActivityThread", null), "currentActivityThread");
         final Context systemContext = (Context) XposedHelpers.callMethod(activityThread, "getSystemContext");
-        Uri uri = Uri.parse("content://name.caiyao.fakegps.AppInfoProvider/app");
-        Cursor cursor = systemContext.getContentResolver().query(uri, new String[]{"latitude", "longitude"}, "where package_name=?", new String[]{loadPackageParam.packageName}, null);
-        if (cursor != null) {
-            cursor.moveToNext();
-            double latitude = cursor.getDouble(cursor.getColumnIndex("latitude"));
-            double longitude = cursor.getDouble(cursor.getColumnIndex("longitude"));
+        Uri uri = Uri.parse("content://name.caiyao.fakegps.data.AppInfoProvider/app");
+        Cursor cursor = systemContext.getContentResolver().query(uri, new String[]{"latitude", "longitude"}, "package_name=?", new String[]{loadPackageParam.packageName}, null);
+        if (cursor != null && cursor.moveToNext() && false) {
+            double latitude = cursor.getDouble(cursor.getColumnIndex("latitude")) + (double) new Random().nextInt(100) / 1000000 + ((double) new Random().nextInt(99999999)) / 100000000000000d;
+            double longitude = cursor.getDouble(cursor.getColumnIndex("longitude")) + (double) new Random().nextInt(100) / 1000000 + ((double) new Random().nextInt(99999999)) / 100000000000000d;
             XposedBridge.log("模拟位置:" + loadPackageParam.packageName + "," + latitude + "," + longitude);
             HookUtils.HookAndChange(loadPackageParam.classLoader, latitude, longitude, 41019, 18511);
             cursor.close();
         }
-        if (loadPackageParam.packageName.contains("tencent")) {
-            double latitude = 39.9221460 + (double) new Random().nextInt(100) / 1000000 + ((double) new Random().nextInt(99999999)) / 100000000000000d;
-            double longitude = 116.4052102 + (double) new Random().nextInt(100) / 1000000 + ((double) new Random().nextInt(99999999)) / 100000000000000d;
-            HookUtils.HookAndChange(loadPackageParam.classLoader, latitude, longitude, 41019, 18511);
+        if (loadPackageParam.packageName.contains("tencent") || loadPackageParam.packageName.contains("alibaba")) {
+            double latitude = 34.3291930360 + (double) new Random().nextInt(100) / 1000000 + ((double) new Random().nextInt(99999999)) / 100000000000000d;
+            double longitude = 108.7166360730 + (double) new Random().nextInt(100) / 1000000 + ((double) new Random().nextInt(99999999)) / 100000000000000d;
+            HookUtils.HookAndChange(loadPackageParam.classLoader, latitude, longitude, 0, 0);
         }
     }
 }
