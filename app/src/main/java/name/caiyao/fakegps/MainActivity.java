@@ -9,10 +9,12 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -37,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     private AMap aMap;
     private LatLng latLng;
     private SharedPreferences sharedPreferences;
+    private long mExitTime=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         aMap = mv.getMap();
         double lat = Double.parseDouble(sharedPreferences.getString("lat", "0.0"));
         double lon = Double.parseDouble(sharedPreferences.getString("lon", "0.0"));
-        if (lat != 0.0 && lon != 0.0){
+        if (lat != 0.0 && lon != 0.0) {
             aMap.moveCamera(CameraUpdateFactory.changeLatLng(new LatLng(lat, lon)));
             aMap.moveCamera(CameraUpdateFactory.zoomTo(aMap.getMaxZoomLevel()));
         }
@@ -79,9 +82,24 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
             locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(this, "请打开模拟位置权限！", Toast.LENGTH_SHORT).show();
+            showDialog();
         }
         mv.onResume();
+    }
+
+    private void showDialog() {
+        new AlertDialog.Builder(this).setTitle("需要打开模拟位置").setMessage("是否跳转到开发者选项打开模拟位置").setPositiveButton("确认", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
+                startActivity(intent);
+            }
+        }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        }).show();
     }
 
     @Override
@@ -116,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                     startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Toast.makeText(this, "请打开模拟位置权限！", Toast.LENGTH_SHORT).show();
+                    showDialog();
                 }
                 break;
             case R.id.stop:
@@ -154,6 +172,22 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     protected void onPause() {
         super.onPause();
         mv.onPause();
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if ((System.currentTimeMillis() - mExitTime) > 2000) {//
+                // 如果两次按键时间间隔大于2000毫秒，则不退出
+                Toast.makeText(this, "再按一次退出程序,停止模拟位置！", Toast.LENGTH_SHORT).show();
+                mExitTime = System.currentTimeMillis();// 更新mExitTime
+            } else {
+                System.exit(0);// 否则退出程序
+            }
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+
     }
 
     private void search(final String key) {
