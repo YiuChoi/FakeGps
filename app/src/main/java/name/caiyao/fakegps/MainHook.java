@@ -1,6 +1,7 @@
 package name.caiyao.fakegps;
 
 import android.content.ContentResolver;
+import android.content.pm.ApplicationInfo;
 import android.os.Build;
 import android.provider.Settings;
 import android.telephony.CellIdentityCdma;
@@ -28,18 +29,17 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 public class MainHook implements IXposedHookLoadPackage {
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
-        if (!loadPackageParam.packageName.contains("tencent") && !loadPackageParam.packageName.contains("alibaba") && !loadPackageParam.packageName.contains("baidu"))
-            return;
-        XposedHelpers.findAndHookMethod("android.provider.Settings.Secure", loadPackageParam.classLoader, "getString",
-                ContentResolver.class, String.class, new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        String requested = (String) param.args[1];
-                        if (requested.equals(Settings.Secure.ALLOW_MOCK_LOCATION)) {
-                            param.setResult("0");
+        if (loadPackageParam.appInfo.flags != ApplicationInfo.FLAG_SYSTEM)
+            XposedHelpers.findAndHookMethod("android.provider.Settings.Secure", loadPackageParam.classLoader, "getString",
+                    ContentResolver.class, String.class, new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            String requested = (String) param.args[1];
+                            if (requested.equals(Settings.Secure.ALLOW_MOCK_LOCATION)) {
+                                param.setResult("0");
+                            }
                         }
-                    }
-                });
+                    });
 
         // at API level 18, the function Location.isFromMockProvider is added
         if (Build.VERSION.SDK_INT >= 18) {
