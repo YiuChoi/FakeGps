@@ -45,6 +45,10 @@
             android:value="e34a748230a8123b72fd71a6f1604946" />
 
         <service android:name=".MockGpsService"/>
+        <provider
+            android:authorities="name.caiyao.fakegps.SettingProvider"
+            android:exported="true"
+            android:name=".SettingProvider"/>
     </application>
 
 </manifest>

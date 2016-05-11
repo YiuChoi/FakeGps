@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         sharedPreferences = getSharedPreferences("locationHistory", Context.MODE_PRIVATE);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -138,7 +139,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                             android.location.Criteria.ACCURACY_FINE);
                     locationManager.setTestProviderEnabled(mockProviderName, true);
                     locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
-                    sendBroadcast(new Intent(MainHook.ACTION_START_HOOK));
                     startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -190,7 +190,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                 Toast.makeText(this, "再按一次退出程序,停止模拟位置！", Toast.LENGTH_SHORT).show();
                 mExitTime = System.currentTimeMillis();// 更新mExitTime
             } else {
-                sendBroadcast(new Intent(MainHook.ACTION_STOP_HOOK));
                 System.exit(0);// 否则退出程序
             }
             return true;
@@ -248,7 +247,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        sendBroadcast(new Intent(MainHook.ACTION_STOP_HOOK));
         mv.onDestroy();
     }
 
@@ -266,7 +264,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
 
     @Override
     public void onBackPressed() {
-        sendBroadcast(new Intent(MainHook.ACTION_STOP_HOOK));
         startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
         super.onBackPressed();
     }

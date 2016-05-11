@@ -1,11 +1,10 @@
 package name.caiyao.fakegps;
 
-import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 import android.telephony.CellLocation;
@@ -16,6 +15,7 @@ import java.util.List;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -24,30 +24,32 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  */
 public class MainHook implements IXposedHookLoadPackage {
 
-    private static boolean isHook = false;
-    public static final String ACTION_START_HOOK = "name.caiyao.fakegps.ACTION_START_HOOK";
-    public static final String ACTION_STOP_HOOK = "name.caiyao.fakegps.ACTION_STOP_HOOK";
+    public static boolean isHook = false;
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
-
         final Object activityThread = XposedHelpers.callStaticMethod(XposedHelpers.findClass("android.app.ActivityThread", null), "currentActivityThread");
         final Context systemContext = (Context) XposedHelpers.callMethod(activityThread, "getSystemContext");
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ACTION_START_HOOK);
-        intentFilter.addAction(ACTION_STOP_HOOK);
-        systemContext.registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(ACTION_START_HOOK))
+        Uri uri = Uri.parse("content://name.caiyao.fakegps.SettingProvider/fake");
+        Cursor cursor = systemContext.getContentResolver().query(uri, null, null, null, null);
+        if (cursor != null && cursor.moveToNext()) {
+            String key = cursor.getString(cursor.getColumnIndex("key"));
+            String value = cursor.getString(cursor.getColumnIndex("value"));
+            if (key.equals("hook")) {
+                if (value.equals("1")) {
                     isHook = true;
-                else if (intent.getAction().equals(ACTION_STOP_HOOK))
+                } else if (value.equals("0")) {
                     isHook = false;
+                }
             }
-        }, intentFilter);
+            cursor.close();
+        }else{
+            XposedBridge.log("cusor is null");
+        }
 
         if ((loadPackageParam.appInfo.flags & ApplicationInfo.FLAG_SYSTEM) > 0)
             return;
+        XposedBridge.log(loadPackageParam.packageName + ",hook;" + isHook);
         if (!isHook) {
             return;
         }

@@ -2,11 +2,15 @@ package name.caiyao.fakegps;
 
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.BitmapFactory;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.support.v7.app.NotificationCompat;
@@ -18,8 +22,15 @@ public class MockGpsService extends Service {
     public static final String ACTION_STOP = "name.caiyao.fakegps.STOP_FAKE";
 
     UpdateGPSThread currentThread = null;
+    private SQLiteDatabase mSQLiteDatabase;
 
     public MockGpsService() {
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mSQLiteDatabase = new DbHelper(this).getWritableDatabase();
     }
 
     @Override
@@ -34,8 +45,16 @@ public class MockGpsService extends Service {
             currentThread = new UpdateGPSThread();
             currentThread.mLocation = intent.getStringExtra("location");
             currentThread.start();
+            ContentValues contentValues = new ContentValues();
+            contentValues.put("key", "hook");
+            contentValues.put("value", "1");
+            mSQLiteDatabase.insertWithOnConflict(DbHelper.TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
         }
         if (intent.getStringExtra("action").equalsIgnoreCase(ACTION_STOP)) {
+            ContentValues contentValues = new ContentValues();
+            contentValues.put("key", "hook");
+            contentValues.put("value", "0");
+            mSQLiteDatabase.insertWithOnConflict(DbHelper.TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
             if (currentThread != null) {
                 currentThread.Running = false;
                 currentThread.interrupt();
@@ -83,13 +102,15 @@ public class MockGpsService extends Service {
             location.setAltitude(2.0f);
             location.setAccuracy(3.0f);
             createProgressNotification(location);
-            location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
+            }
             try {
                 locationManager.addTestProvider("gps",
                         "requiresNetwork".equals(""), "requiresSatellite".equals(""), "requiresCell".equals(""), "hasMonetaryCost".equals(""),
                         "supportsAltitude".equals(""), "supportsSpeed".equals(""),
-                        "supportsBearing".equals(""), android.location.Criteria.POWER_LOW,
-                        android.location.Criteria.ACCURACY_FINE);
+                        "supportsBearing".equals(""), Criteria.POWER_LOW,
+                        Criteria.ACCURACY_FINE);
                 locationManager.setTestProviderLocation("gps", location);
             } catch (SecurityException e) {
                 e.printStackTrace();
