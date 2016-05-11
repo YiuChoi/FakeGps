@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     private AMap aMap;
     private LatLng latLng;
     private SharedPreferences sharedPreferences;
-    private long mExitTime=0;
+    private long mExitTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +56,13 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         double lat = Double.parseDouble(sharedPreferences.getString("lat", "0.0"));
         double lon = Double.parseDouble(sharedPreferences.getString("lon", "0.0"));
         if (lat != 0.0 && lon != 0.0) {
+            latLng = new LatLng(lat, lon);
+            aMap.clear();
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(latLng);
+            markerOptions.draggable(true);
+            markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
+            aMap.addMarker(markerOptions);
             aMap.moveCamera(CameraUpdateFactory.changeLatLng(new LatLng(lat, lon)));
             aMap.moveCamera(CameraUpdateFactory.zoomTo(aMap.getMaxZoomLevel()));
         }
@@ -131,6 +138,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                             android.location.Criteria.ACCURACY_FINE);
                     locationManager.setTestProviderEnabled(mockProviderName, true);
                     locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
+                    sendBroadcast(new Intent(MainHook.ACTION_START_HOOK));
                     startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -182,6 +190,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                 Toast.makeText(this, "再按一次退出程序,停止模拟位置！", Toast.LENGTH_SHORT).show();
                 mExitTime = System.currentTimeMillis();// 更新mExitTime
             } else {
+                sendBroadcast(new Intent(MainHook.ACTION_STOP_HOOK));
                 System.exit(0);// 否则退出程序
             }
             return true;
@@ -239,6 +248,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        sendBroadcast(new Intent(MainHook.ACTION_STOP_HOOK));
         mv.onDestroy();
     }
 
@@ -249,7 +259,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
         markerOptions.draggable(true);
-        Log.i("TAG", "经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
         markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
         aMap.addMarker(markerOptions);
         this.latLng = latLng;
@@ -257,6 +266,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
 
     @Override
     public void onBackPressed() {
+        sendBroadcast(new Intent(MainHook.ACTION_STOP_HOOK));
         startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
         super.onBackPressed();
     }
