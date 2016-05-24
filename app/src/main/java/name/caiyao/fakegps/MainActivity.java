@@ -139,15 +139,16 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                             android.location.Criteria.ACCURACY_FINE);
                     locationManager.setTestProviderEnabled(mockProviderName, true);
                     locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
-                    startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", latLng.latitude + ":" + latLng.longitude));
-                    Toast.makeText(this,"重启需定位的应用以生效！",Toast.LENGTH_LONG).show();
+                    double[] gpsLocation = GpsUtils.gcj02towgs84(latLng.longitude, latLng.latitude);
+                    startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", gpsLocation[1] + ":" + gpsLocation[0]));
+                    Toast.makeText(this, "重启需定位的应用以生效！", Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     e.printStackTrace();
                     showDialog();
                 }
                 break;
             case R.id.stop:
-                Toast.makeText(this,"重启需定位的应用以生效！",Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "重启需定位的应用以生效！", Toast.LENGTH_LONG).show();
                 startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
                 break;
             case R.id.search:
