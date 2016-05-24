@@ -141,14 +141,14 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                     locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
                     double[] gpsLocation = GpsUtils.gcj02towgs84(latLng.longitude, latLng.latitude);
                     startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", gpsLocation[1] + ":" + gpsLocation[0]));
-                    Toast.makeText(this, "重启需定位的应用以生效！", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "位置模拟成功，重启需定位的应用以生效！", Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     e.printStackTrace();
                     showDialog();
                 }
                 break;
             case R.id.stop:
-                Toast.makeText(this, "重启需定位的应用以生效！", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "位置模拟关闭，重启需定位的应用以生效！", Toast.LENGTH_LONG).show();
                 startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
                 break;
             case R.id.search:
@@ -156,6 +156,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                 final EditText et_key = (EditText) view.findViewById(R.id.key);
                 new AlertDialog.Builder(this).setView(view)
                         .setTitle("搜索位置")
+                        .setMessage("只能搜索国内地点，如需定位国外请拖拽地图选取！定位到国外使用Google地图的需要翻墙！")
                         .setPositiveButton("搜索", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
