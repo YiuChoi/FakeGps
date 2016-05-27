@@ -11,18 +11,55 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.SystemClock;
 import android.support.v7.app.NotificationCompat;
-import android.util.Log;
+
+import java.util.ArrayList;
 
 public class MockGpsService extends Service {
 
-    public static final String ACTION_START = "name.caiyao.fakegps.START_FAKE";
-    public static final String ACTION_STOP = "name.caiyao.fakegps.STOP_FAKE";
+    static final String ACTION_START = "name.caiyao.fakegps.START_FAKE";
+    static final String ACTION_STOP = "name.caiyao.fakegps.STOP_FAKE";
+    private static final int CHANGE_LOCATION = 1;
 
-    UpdateGPSThread currentThread = null;
+    private UpdateGPSThread currentThread = null;
     private SQLiteDatabase mSQLiteDatabase;
+    private ArrayList<String> mLocation;
+    private int locationIndex = 0;
+    private int duration;
+    private Location currentLocation;
+
+    private Handler mockHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch (msg.what) {
+                case CHANGE_LOCATION:
+                    Location tempLocation = new Location("gps");
+                    locationIndex++;
+                    if (locationIndex == mLocation.size()) {
+                        locationIndex = 0;
+                    }
+                    String[] loArr = mLocation.get(locationIndex).split(":");
+                    tempLocation.setTime(System.currentTimeMillis());
+                    tempLocation.setLatitude(Double.parseDouble(loArr[0]));
+                    tempLocation.setLongitude(Double.parseDouble(loArr[1]));
+                    tempLocation.setAltitude(2.0f);
+                    tempLocation.setAccuracy(3.0f);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                        tempLocation.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
+                    }
+                    currentLocation = tempLocation;
+                    removeProgressNotification();
+                    createProgressNotification(currentLocation);
+                    mockHandler.sendEmptyMessageDelayed(CHANGE_LOCATION, duration);
+                    break;
+            }
+            return true;
+        }
+    });
 
     public MockGpsService() {
     }
@@ -40,10 +77,11 @@ public class MockGpsService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i("TAG", "startCommand");
         if (intent.getStringExtra("action").equalsIgnoreCase(ACTION_START)) {
+            mLocation = intent.getStringArrayListExtra("location");
+            duration = intent.getIntExtra("duration", 30 * 1000);
+            mockHandler.sendEmptyMessage(CHANGE_LOCATION);
             currentThread = new UpdateGPSThread();
-            currentThread.mLocation = intent.getStringExtra("location");
             currentThread.start();
             ContentValues contentValues = new ContentValues();
             contentValues.put("key", "hook");
@@ -54,6 +92,7 @@ public class MockGpsService extends Service {
             ContentValues contentValues = new ContentValues();
             contentValues.put("key", "hook");
             contentValues.put("value", "0");
+            mockHandler.removeMessages(CHANGE_LOCATION);
             mSQLiteDatabase.insertWithOnConflict(DbHelper.TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
             if (currentThread != null) {
                 currentThread.Running = false;
@@ -67,7 +106,7 @@ public class MockGpsService extends Service {
     }
 
 
-    public void createProgressNotification(Location location) {
+    private void createProgressNotification(Location location) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.drawable.gps);//最为重要的一个参数，如果不设置，通知不会出现在状态栏中。
         builder.setTicker("开始模拟位置:" + location.getLatitude() + "," + location.getLongitude());
@@ -81,44 +120,31 @@ public class MockGpsService extends Service {
 
     }
 
-    public void removeProgressNotification() {
+    private void removeProgressNotification() {
         stopForeground(true);
     }
 
-    class UpdateGPSThread extends Thread {
+    private class UpdateGPSThread extends Thread {
 
-        String mLocation;
-        public boolean Running;
+        boolean Running;
 
         @Override
         public void run() {
             Running = true;
-            String[] loArr = mLocation.split(":");
             LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            Location location = new Location("gps");
-            location.setTime(System.currentTimeMillis());
-            location.setLatitude(Double.parseDouble(loArr[0]));
-            location.setLongitude(Double.parseDouble(loArr[1]));
-            location.setAltitude(2.0f);
-            location.setAccuracy(3.0f);
-            createProgressNotification(location);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
-            }
             try {
                 locationManager.addTestProvider("gps",
                         "requiresNetwork".equals(""), "requiresSatellite".equals(""), "requiresCell".equals(""), "hasMonetaryCost".equals(""),
                         "supportsAltitude".equals(""), "supportsSpeed".equals(""),
                         "supportsBearing".equals(""), Criteria.POWER_LOW,
                         Criteria.ACCURACY_FINE);
-                locationManager.setTestProviderLocation("gps", location);
             } catch (SecurityException e) {
                 e.printStackTrace();
             }
 
             while (Running) {
                 try {
-                    locationManager.setTestProviderLocation("gps", location);
+                    locationManager.setTestProviderLocation("gps", currentLocation);
                     Thread.sleep(100);
                 } catch (Exception ignored) {
                 }

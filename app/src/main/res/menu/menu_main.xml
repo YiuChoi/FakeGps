@@ -9,6 +9,10 @@
         android:id="@+id/stop"
         android:title="@string/stop"
         app:showAsAction="always"/>
+    <item
+        android:id="@+id/clear"
+        android:title="清空"
+        app:showAsAction="always"/>
 
     <item
         android:id="@+id/search"
@@ -16,11 +20,7 @@
         app:showAsAction="never"/>
 
     <item
-        android:id="@+id/donate"
-        android:title="@string/donate"
-        app:showAsAction="never"/>
-    <item
-        android:id="@+id/about"
-        android:title="@string/about"
+        android:id="@+id/duration"
+        android:title="设置多点间隔"
         app:showAsAction="never"/>
 </menu>

@@ -4,8 +4,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,7 +11,6 @@ import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -33,13 +30,15 @@ import com.amap.api.services.poisearch.PoiSearch;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements AMap.OnMapClickListener, LocationListener {
+public class MainActivity extends AppCompatActivity implements AMap.OnMapClickListener {
 
     private MapView mv;
     private AMap aMap;
     private LatLng latLng;
     private SharedPreferences sharedPreferences;
     private long mExitTime = 0;
+    private int duration;
+    private ArrayList<String> locationList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         aMap = mv.getMap();
         double lat = Double.parseDouble(sharedPreferences.getString("lat", "0.0"));
         double lon = Double.parseDouble(sharedPreferences.getString("lon", "0.0"));
+        duration = sharedPreferences.getInt("duration", 30 * 1000);
         if (lat != 0.0 && lon != 0.0) {
             latLng = new LatLng(lat, lon);
             aMap.clear();
@@ -87,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
 
                     android.location.Criteria.ACCURACY_FINE);
             locationManager.setTestProviderEnabled(mockProviderName, true);
-            locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
         } catch (Exception e) {
             e.printStackTrace();
             showDialog();
@@ -121,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         switch (item.getItemId()) {
             case R.id.start:
                 if (latLng == null) {
-                    Toast.makeText(this, "请点击地图选择一个地点！", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "请点击地图选择至少一个地点！", Toast.LENGTH_SHORT).show();
                     return true;
                 }
                 sharedPreferences.edit().putString("lat", String.valueOf(latLng.latitude)).putString("lon", String.valueOf(latLng.longitude)).apply();
@@ -138,9 +137,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
 
                             android.location.Criteria.ACCURACY_FINE);
                     locationManager.setTestProviderEnabled(mockProviderName, true);
-                    locationManager.requestLocationUpdates(mockProviderName, 0, 0, this);
-                    double[] gpsLocation = GpsUtils.gcj02towgs84(latLng.longitude, latLng.latitude);
-                    startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putExtra("location", gpsLocation[1] + ":" + gpsLocation[0]));
+                    startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_START).putStringArrayListExtra("location", locationList).putExtra("duration", duration));
                     Toast.makeText(this, "位置模拟成功，重启需定位的应用以生效！", Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -156,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                 final EditText et_key = (EditText) view.findViewById(R.id.key);
                 new AlertDialog.Builder(this).setView(view)
                         .setTitle("搜索位置")
-                        .setMessage("只能搜索国内地点，如需定位国外请拖拽地图选取！定位到国外使用Google地图的需要翻墙！")
+                        .setMessage("只能搜索国内地点，如需定位国外请拖拽地图选取！")
                         .setPositiveButton("搜索", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -169,10 +166,11 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                     }
                 }).show();
                 break;
-            case R.id.donate:
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://qr.alipay.com/apoy1zw1o2xpc7915d")));
+            case R.id.clear:
+                aMap.clear();
+                locationList.clear();
                 break;
-            case R.id.about:
+            case R.id.duration:
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://caiyao.name/releases")));
                 break;
 
@@ -257,40 +255,19 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
 
     @Override
     public void onMapClick(LatLng latLng) {
-        aMap.clear();
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
         markerOptions.draggable(true);
         markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
         aMap.addMarker(markerOptions);
         this.latLng = latLng;
+        double[] gpsLocation = GpsUtils.gcj02towgs84(latLng.longitude, latLng.latitude);
+        locationList.add(gpsLocation[1] + ":" + gpsLocation[0]);
     }
 
     @Override
     public void onBackPressed() {
         startService(new Intent(MainActivity.this, MockGpsService.class).putExtra("action", MockGpsService.ACTION_STOP));
         super.onBackPressed();
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        double lat = location.getLatitude();
-        double lng = location.getLongitude();
-        Log.i("gps", String.format("location: x=%s y=%s", lat, lng));
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
     }
 }
