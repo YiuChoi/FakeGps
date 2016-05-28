@@ -5,7 +5,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
@@ -16,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -55,15 +55,8 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         aMap = mv.getMap();
         double lat = Double.parseDouble(sharedPreferences.getString("lat", "0.0"));
         double lon = Double.parseDouble(sharedPreferences.getString("lon", "0.0"));
-        duration = sharedPreferences.getInt("duration", 30 * 1000);
+        duration = sharedPreferences.getInt("duration", 30);
         if (lat != 0.0 && lon != 0.0) {
-            latLng = new LatLng(lat, lon);
-            aMap.clear();
-            MarkerOptions markerOptions = new MarkerOptions();
-            markerOptions.position(latLng);
-            markerOptions.draggable(true);
-            markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
-            aMap.addMarker(markerOptions);
             aMap.moveCamera(CameraUpdateFactory.changeLatLng(new LatLng(lat, lon)));
             aMap.moveCamera(CameraUpdateFactory.zoomTo(aMap.getMaxZoomLevel()));
         }
@@ -171,7 +164,22 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                 locationList.clear();
                 break;
             case R.id.duration:
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://caiyao.name/releases")));
+                View view1 = LayoutInflater.from(this).inflate(R.layout.dialog_search, null, false);
+                final EditText et_key1 = (EditText) view1.findViewById(R.id.key);
+                et_key1.setInputType(EditorInfo.TYPE_CLASS_NUMBER);
+                new AlertDialog.Builder(this).setView(view1)
+                        .setTitle("设置多点间隔(s)")
+                        .setPositiveButton("确认", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                duration = Integer.parseInt(et_key1.getText().toString());
+                            }
+                        }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                }).show();
                 break;
 
         }
@@ -258,7 +266,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
         markerOptions.draggable(true);
-        markerOptions.title("经度：" + latLng.longitude + ",纬度：" + latLng.latitude);
         aMap.addMarker(markerOptions);
         this.latLng = latLng;
         double[] gpsLocation = GpsUtils.gcj02towgs84(latLng.longitude, latLng.latitude);

@@ -79,7 +79,7 @@ public class MockGpsService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getStringExtra("action").equalsIgnoreCase(ACTION_START)) {
             mLocation = intent.getStringArrayListExtra("location");
-            duration = intent.getIntExtra("duration", 30 * 1000);
+            duration = intent.getIntExtra("duration", 30)*1000;
             mockHandler.sendEmptyMessage(CHANGE_LOCATION);
             currentThread = new UpdateGPSThread();
             currentThread.start();
