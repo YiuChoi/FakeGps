@@ -10,6 +10,7 @@ import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -17,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amap.api.maps2d.AMap;
@@ -33,11 +35,11 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements AMap.OnMapClickListener {
 
     private MapView mv;
+    private TextView tv_count;
     private AMap aMap;
-    private LatLng latLng;
     private SharedPreferences sharedPreferences;
     private long mExitTime = 0;
-    private int duration;
+    private int duration, count = 0;
     private ArrayList<String> locationList = new ArrayList<>();
 
     @Override
@@ -49,16 +51,27 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        tv_count = (TextView) findViewById(R.id.count);
         mv = (MapView) findViewById(R.id.mv);
         assert mv != null;
         mv.onCreate(savedInstanceState);
         aMap = mv.getMap();
-        double lat = Double.parseDouble(sharedPreferences.getString("lat", "0.0"));
-        double lon = Double.parseDouble(sharedPreferences.getString("lon", "0.0"));
+        String location = sharedPreferences.getString("location", "");
         duration = sharedPreferences.getInt("duration", 30);
-        if (lat != 0.0 && lon != 0.0) {
-            aMap.moveCamera(CameraUpdateFactory.changeLatLng(new LatLng(lat, lon)));
-            aMap.moveCamera(CameraUpdateFactory.zoomTo(aMap.getMaxZoomLevel()));
+        if (!TextUtils.isEmpty(location)) {
+            String[] locationArr = location.split(",");
+            for (String s : locationArr) {
+                locationList.add(s);
+                count++;
+                String[] lArr = s.split(":");
+                LatLng l = new LatLng(Double.parseDouble(lArr[0]), Double.parseDouble(lArr[1]));
+                MarkerOptions markerOptions = new MarkerOptions();
+                markerOptions.position(l);
+                markerOptions.draggable(true);
+                aMap.addMarker(markerOptions);
+                aMap.moveCamera(CameraUpdateFactory.changeLatLng(l));
+                aMap.moveCamera(CameraUpdateFactory.zoomTo(aMap.getMaxZoomLevel()));
+            }
         }
         aMap.setMapType(AMap.MAP_TYPE_NORMAL);
         aMap.setOnMapClickListener(this);
@@ -112,11 +125,15 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.start:
-                if (latLng == null) {
+                if (locationList.size() == 0) {
                     Toast.makeText(this, "请点击地图选择至少一个地点！", Toast.LENGTH_SHORT).show();
                     return true;
                 }
-                sharedPreferences.edit().putString("lat", String.valueOf(latLng.latitude)).putString("lon", String.valueOf(latLng.longitude)).apply();
+                String location = "";
+                for (String s : locationList) {
+                    location += s + ",";
+                }
+                sharedPreferences.edit().putString("location", location).apply();
                 LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
                 try {
                     String mockProviderName = LocationManager.GPS_PROVIDER;
@@ -160,12 +177,14 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                 }).show();
                 break;
             case R.id.clear:
+                count = 0;
                 aMap.clear();
                 locationList.clear();
                 break;
             case R.id.duration:
                 View view1 = LayoutInflater.from(this).inflate(R.layout.dialog_search, null, false);
                 final EditText et_key1 = (EditText) view1.findViewById(R.id.key);
+                et_key1.setText(duration+"");
                 et_key1.setInputType(EditorInfo.TYPE_CLASS_NUMBER);
                 new AlertDialog.Builder(this).setView(view1)
                         .setTitle("设置多点间隔(s)")
@@ -267,7 +286,8 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         markerOptions.position(latLng);
         markerOptions.draggable(true);
         aMap.addMarker(markerOptions);
-        this.latLng = latLng;
+        count++;
+        tv_count.setText(count+"");
         double[] gpsLocation = GpsUtils.gcj02towgs84(latLng.longitude, latLng.latitude);
         locationList.add(gpsLocation[1] + ":" + gpsLocation[0]);
     }
