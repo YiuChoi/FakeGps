@@ -112,9 +112,9 @@ public class MainActivity extends AppCompatActivity {
 
     class AppAdapter extends RecyclerView.Adapter<AppAdapter.AppViewHolder> {
 
-        public ArrayList<AppInfo> mAppInfos;
+        ArrayList<AppInfo> mAppInfos;
 
-        public AppAdapter(ArrayList<AppInfo> appInfos) {
+        AppAdapter(ArrayList<AppInfo> appInfos) {
             this.mAppInfos = appInfos;
         }
 
@@ -141,13 +141,13 @@ public class MainActivity extends AppCompatActivity {
             return mAppInfos.size();
         }
 
-        public class AppViewHolder extends RecyclerView.ViewHolder {
+        class AppViewHolder extends RecyclerView.ViewHolder {
 
-            public ImageView ivIcon;
-            public TextView tvName;
-            public TextView tvPackageName;
+            ImageView ivIcon;
+            TextView tvName;
+            TextView tvPackageName;
 
-            public AppViewHolder(View itemView) {
+            AppViewHolder(View itemView) {
                 super(itemView);
                 ivIcon = (ImageView) itemView.findViewById(R.id.iv_icon);
                 tvName = (TextView) itemView.findViewById(R.id.tv_name);
