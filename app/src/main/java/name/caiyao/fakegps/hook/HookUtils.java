@@ -16,7 +16,6 @@ import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoWcdma;
 import android.telephony.CellLocation;
-import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
 
 import java.lang.reflect.Method;
@@ -35,92 +34,92 @@ class HookUtils {
 
     static void HookAndChange(ClassLoader classLoader, final double latitude, final double longtitude, final int lac, final int cid) {
 
-        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
-                "getNetworkOperatorName", new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult("");
-                    }
-                });
-
-        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
-                "getNetworkOperator", new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult("");
-                    }
-                });
-
-        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
-                "getSimOperatorName", new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult("");
-                    }
-                });
-
-        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
-                "getSimOperator", new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult(null);
-                    }
-                });
-
-        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
-                "getSimCountryIso", new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult("");
-                    }
-                });
-
-        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
-                "getNetworkCountryIso", new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult("");
-                    }
-                });
-        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
-                "getNetworkType", new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult(TelephonyManager.NETWORK_TYPE_UNKNOWN);
-                    }
-                });
-
-        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
-                "getPhoneType", new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult(TelephonyManager.PHONE_TYPE_NONE);
-                    }
-                });
-
-        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
-                "getCurrentPhoneType", new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult(0);
-                    }
-                });
-
-        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
-                "getDataState", new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult(2);
-                    }
-                });
-
-        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
-                "getSimState", new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult(TelephonyManager.SIM_STATE_UNKNOWN);
-                    }
-                });
+//        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
+//                "getNetworkOperatorName", new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        param.setResult("");
+//                    }
+//                });
+//
+//        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
+//                "getNetworkOperator", new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        param.setResult("");
+//                    }
+//                });
+//
+//        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
+//                "getSimOperatorName", new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        param.setResult("");
+//                    }
+//                });
+//
+//        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
+//                "getSimOperator", new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        param.setResult(null);
+//                    }
+//                });
+//
+//        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
+//                "getSimCountryIso", new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        param.setResult("");
+//                    }
+//                });
+//
+//        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
+//                "getNetworkCountryIso", new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        param.setResult("");
+//                    }
+//                });
+//        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
+//                "getNetworkType", new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        param.setResult(TelephonyManager.NETWORK_TYPE_UNKNOWN);
+//                    }
+//                });
+//
+//        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
+//                "getPhoneType", new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        param.setResult(TelephonyManager.PHONE_TYPE_NONE);
+//                    }
+//                });
+//
+//        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
+//                "getCurrentPhoneType", new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        param.setResult(0);
+//                    }
+//                });
+//
+//        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
+//                "getDataState", new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        param.setResult(TelephonyManager.DATA_DISCONNECTED);
+//                    }
+//                });
+//
+//        XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
+//                "getSimState", new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        param.setResult(TelephonyManager.SIM_STATE_UNKNOWN);
+//                    }
+//                });
 
         XposedHelpers.findAndHookMethod("android.telephony.TelephonyManager", classLoader,
                 "getCellLocation", new XC_MethodHook() {
